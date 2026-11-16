@@ -1,0 +1,94 @@
+{
+    "model_type": "TF-IDF + Multinomial Logistic Regression",
+    "vocabulary_size": 4065,
+    "classes": [
+        "Phishing",
+        "Safe",
+        "Spam"
+    ],
+    "sample_count": 130,
+    "test_size": 33,
+    "accuracy": 0.9394,
+    "precision_macro": 0.941,
+    "recall_macro": 0.941,
+    "f1_macro": 0.941,
+    "precision_weighted": 0.9394,
+    "recall_weighted": 0.9394,
+    "f1_weighted": 0.9394,
+    "false_positive_rate": 0.0769,
+    "confusion_matrix": [
+        [
+            10,
+            0,
+            0
+        ],
+        [
+            0,
+            12,
+            1
+        ],
+        [
+            0,
+            1,
+            9
+        ]
+    ],
+    "per_class": {
+        "Phishing": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "support": 10
+        },
+        "Safe": {
+            "precision": 0.9231,
+            "recall": 0.9231,
+            "f1_score": 0.9231,
+            "support": 13
+        },
+        "Spam": {
+            "precision": 0.9,
+            "recall": 0.9,
+            "f1_score": 0.9,
+            "support": 10
+        }
+    },
+    "top_keywords": {
+        "Phishing": [
+            "__url__",
+            "immediately",
+            "verify",
+            "password",
+            "was",
+            "card",
+            "to",
+            "will",
+            "account",
+            "verify your"
+        ],
+        "Safe": [
+            "the",
+            "review",
+            "available",
+            "app",
+            "to your",
+            "are",
+            "meeting",
+            "you can",
+            "can",
+            "latest"
+        ],
+        "Spam": [
+            "__currency__",
+            "now",
+            "free",
+            "cash",
+            "first",
+            "guaranteed",
+            "only",
+            "or",
+            "up",
+            "__number__"
+        ]
+    }
+}

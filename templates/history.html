@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Detection History & Audit Logs - PhishShield AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="fa-solid fa-clock-rotate-left text-info me-2"></i>Detection History & Audit Logs</h2>
+      <p class="text-secondary small mb-0">Search, filter, and inspect previously analyzed messages and threat reports</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('export_history_csv') }}" class="btn btn-cyber-outline">
+        <i class="fa-solid fa-file-csv me-1"></i> Export to CSV
+      </a>
+      <a href="{{ url_for('detect') }}" class="btn btn-cyber">
+        <i class="fa-solid fa-plus me-1"></i> New Analysis
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter & Search Controls Card -->
+  <div class="cyber-card p-3 mb-4">
+    <div class="row g-3 align-items-center">
+      <div class="col-md-5">
+        <div class="input-group">
+          <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-search"></i></span>
+          <input type="text" class="form-control" id="historySearchInput" placeholder="Search by subject, message text, or sender..." onkeyup="filterHistory()">
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="small text-secondary fw-semibold text-nowrap">Category:</span>
+          <select class="form-select" id="historyCategorySelect" onchange="filterHistory()">
+            <option value="All">All Categories</option>
+            <option value="Phishing">Phishing</option>
+            <option value="Spam">Spam</option>
+            <option value="Safe">Safe / Legitimate</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="small text-secondary fw-semibold text-nowrap">Risk:</span>
+          <select class="form-select" id="historyRiskSelect" onchange="filterHistory()">
+            <option value="All">All Risk Levels</option>
+            <option value="High Risk">High Risk (61-100)</option>
+            <option value="Medium Risk">Medium Risk (31-60)</option>
+            <option value="Low Risk">Low Risk (0-30)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="col-md-1 text-md-end">
+        <button class="btn btn-sm btn-cyber-outline w-100" onclick="resetFilters()" title="Reset Filters">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Table Card -->
+  <div class="cyber-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span class="small text-secondary">Showing <strong id="historyCount">0</strong> recorded detection events</span>
+      <span class="badge bg-secondary-subtle text-secondary small">Auto-Indexed</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="cyber-table" id="historyTable">
+        <thead>
+          <tr>
+            <th>Date & Time</th>
+            <th>Sender</th>
+            <th>Subject / Snippet</th>
+            <th>Category</th>
+            <th>Risk Score</th>
+            <th>Language</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <!-- Populated dynamically via JS -->
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">
+              <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading historical audit records...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: View Detection Details -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content cyber-card p-2">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <div>
+          <h5 class="modal-title fw-bold" id="modalSubject">Detection Details</h5>
+          <span class="small text-muted font-monospace" id="modalTimestamp"></span>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Metadata Header -->
+        <div class="row g-3 mb-4 p-3 rounded" style="background: rgba(0,0,0,0.3);">
+          <div class="col-sm-4">
+            <span class="small text-muted d-block">Sender:</span>
+            <span class="font-monospace fw-semibold small text-cyan" id="modalSender"></span>
+          </div>
+          <div class="col-sm-4">
+            <span class="small text-muted d-block">Verdict Category:</span>
+            <div id="modalCategoryBadge"></div>
+          </div>
+          <div class="col-sm-4">
+            <span class="small text-muted d-block">Risk Score:</span>
+            <span class="fs-5 fw-bold font-monospace" id="modalRiskScore"></span>
+          </div>
+        </div>
+
+        <!-- Full Original Message -->
+        <h6 class="fw-bold mb-2 small text-secondary text-uppercase" style="letter-spacing: 0.05em;">Original Submitted Message:</h6>
+        <div class="p-3 rounded mb-4 font-monospace small" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); white-space: pre-wrap;" id="modalMessageContent"></div>
+
+        <!-- Explanations & Triggers -->
+        <h6 class="fw-bold mb-2 small text-secondary text-uppercase" style="letter-spacing: 0.05em;">Analysis Explanation & Security Triggers:</h6>
+        <div class="p-3 rounded mb-3" style="background: rgba(0, 242, 254, 0.04); border: 1px solid var(--border-color);">
+          <ul class="mb-0 ps-3 small text-light" id="modalExplanationsList"></ul>
+        </div>
+      </div>
+      <div class="modal-footer border-top border-secondary border-opacity-25">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allHistoryRecords = [];
+
+// Fetch History Data
+async function loadHistory() {
+  try {
+    const res = await fetch('/api/history');
+    const result = await res.json();
+    if (result.status === 'success') {
+      allHistoryRecords = result.data;
+      renderHistoryTable(allHistoryRecords);
+    }
+  } catch (err) {
+    console.error("Error loading history:", err);
+  }
+}
+
+function renderHistoryTable(records) {
+  const tbody = document.getElementById('historyTableBody');
+  document.getElementById('historyCount').textContent = records.length;
+
+  if (records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">No matching detection records found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = '';
+  records.forEach((r, idx) => {
+    let catBadge = '';
+    if (r.category === 'Phishing') {
+      catBadge = '<span class="badge badge-phish"><i class="fa-solid fa-skull"></i> Phishing</span>';
+    } else if (r.category === 'Spam') {
+      catBadge = '<span class="badge badge-spam"><i class="fa-solid fa-bullhorn"></i> Spam</span>';
+    } else {
+      catBadge = '<span class="badge badge-safe"><i class="fa-solid fa-check"></i> Safe</span>';
+    }
+
+    const progressColor = r.risk_score >= 61 ? 'bg-danger' : (r.risk_score >= 31 ? 'bg-warning' : 'bg-success');
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="font-monospace small text-secondary">${r.created_at.substring(0, 16)}</td>
+      <td class="font-monospace small text-truncate" style="max-width: 160px;" title="${r.sender}">${r.sender}</td>
+      <td class="text-truncate" style="max-width: 260px;">
+        <strong class="d-block text-truncate">${r.subject}</strong>
+        <span class="text-muted small text-truncate d-block">${r.message_content.substring(0, 50)}...</span>
+      </td>
+      <td>${catBadge}</td>
+      <td>
+        <div class="d-flex align-items-center gap-2">
+          <div class="progress" style="width: 50px; height: 6px; background: rgba(255,255,255,0.1);">
+            <div class="progress-bar ${progressColor}" style="width: ${r.risk_score}%;"></div>
+          </div>
+          <span class="font-monospace small fw-bold">${r.risk_score}/100</span>
+        </div>
+      </td>
+      <td><span class="badge bg-dark border border-secondary text-secondary small">${r.language || 'English'}</span></td>
+      <td>
+        <div class="d-flex gap-1">
+          <button class="btn btn-sm btn-cyber-outline py-1 px-2" onclick="viewDetails(${r.id})" title="View Complete Report">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger py-1 px-2" onclick="deleteHistoryItem(${r.id})" title="Delete Record">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterHistory() {
+  const search = document.getElementById('historySearchInput').value.toLowerCase().trim();
+  const category = document.getElementById('historyCategorySelect').value;
+  const risk = document.getElementById('historyRiskSelect').value;
+
+  const filtered = allHistoryRecords.filter(r => {
+    const matchesSearch = !search || 
+      (r.subject && r.subject.toLowerCase().includes(search)) ||
+      (r.message_content && r.message_content.toLowerCase().includes(search)) ||
+      (r.sender && r.sender.toLowerCase().includes(search));
+
+    const matchesCategory = category === 'All' || r.category === category;
+    const matchesRisk = risk === 'All' || r.risk_level === risk;
+
+    return matchesSearch && matchesCategory && matchesRisk;
+  });
+
+  renderHistoryTable(filtered);
+}
+
+function resetFilters() {
+  document.getElementById('historySearchInput').value = '';
+  document.getElementById('historyCategorySelect').value = 'All';
+  document.getElementById('historyRiskSelect').value = 'All';
+  renderHistoryTable(allHistoryRecords);
+}
+
+function viewDetails(id) {
+  const record = allHistoryRecords.find(item => item.id === id);
+  if (!record) return;
+
+  document.getElementById('modalSubject').textContent = record.subject || 'Detailed Threat Analysis';
+  document.getElementById('modalTimestamp').textContent = record.created_at;
+  document.getElementById('modalSender').textContent = record.sender || 'Not Specified';
+  document.getElementById('modalMessageContent').textContent = record.message_content;
+
+  const catBadge = document.getElementById('modalCategoryBadge');
+  if (record.category === 'Phishing') {
+    catBadge.innerHTML = '<span class="badge badge-phish">Phishing</span>';
+  } else if (record.category === 'Spam') {
+    catBadge.innerHTML = '<span class="badge badge-spam">Spam</span>';
+  } else {
+    catBadge.innerHTML = '<span class="badge badge-safe">Safe</span>';
+  }
+
+  const scoreEl = document.getElementById('modalRiskScore');
+  scoreEl.textContent = `${record.risk_score}/100 (${record.risk_level})`;
+  scoreEl.className = 'fs-5 fw-bold font-monospace ' + (record.risk_score >= 61 ? 'text-danger' : (record.risk_score >= 31 ? 'text-warning' : 'text-success'));
+
+  const expList = document.getElementById('modalExplanationsList');
+  expList.innerHTML = '';
+  const explanations = record.analysis_summary && record.analysis_summary.explanations ? record.analysis_summary.explanations : [];
+
+  if (explanations.length > 0) {
+    explanations.forEach(e => {
+      const li = document.createElement('li');
+      li.className = 'mb-1';
+      li.textContent = e;
+      expList.appendChild(li);
+    });
+  } else {
+    expList.innerHTML = '<li>Standard rule-based check completed.</li>';
+  }
+
+  const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+  modal.show();
+}
+
+async function deleteHistoryItem(id) {
+  if (!confirm("Are you sure you want to delete this detection record?")) return;
+
+  try {
+    const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.status === 'success') {
+      allHistoryRecords = allHistoryRecords.filter(item => item.id !== id);
+      filterHistory();
+    }
+  } catch (err) {
+    console.error("Delete error:", err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadHistory);
+</script>
+{% endblock %}

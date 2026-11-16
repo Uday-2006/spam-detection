@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}User Feedback & Retraining Audit - PhishShield AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="fa-solid fa-comment-dots text-info me-2"></i>Analyst Feedback & Model Audit</h2>
+      <p class="text-secondary small mb-0">Human-in-the-loop verification log to monitor model drift and false positive/negative rates</p>
+    </div>
+    <span class="badge bg-info-subtle text-info p-2 px-3">
+      <i class="fa-solid fa-shield-halved me-1"></i> Data Poisoning Defense Active
+    </span>
+  </div>
+
+  <!-- Security Policy Banner -->
+  <div class="cyber-card p-3 mb-4" style="background: rgba(0, 242, 254, 0.05); border: 1px solid var(--accent-cyan);">
+    <div class="d-flex align-items-center gap-3">
+      <i class="fa-solid fa-lock text-info fs-3"></i>
+      <div>
+        <h6 class="fw-bold mb-1 text-cyan">Adversarial Defense & Continuous Evaluation Policy</h6>
+        <p class="text-secondary small mb-0">
+          In strict compliance with cybersecurity requirements, the system <strong>does not automatically retrain the machine learning model on unverified user feedback</strong>. Automated retraining exposes classification pipelines to data poisoning and model inversion attacks. All submissions are staged in this audit queue for human supervisor verification.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback Log Table -->
+  <div class="cyber-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-bold mb-0"><i class="fa-solid fa-list-check me-2 text-info"></i>Submitted Verification Reports</h6>
+      <span class="badge bg-secondary-subtle text-secondary small">{{ feedback_list|length }} Submissions</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="cyber-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Analyst</th>
+            <th>Detection Subject</th>
+            <th>Model Prediction</th>
+            <th>Feedback Type</th>
+            <th>Suggested True Class</th>
+            <th>Analyst Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if feedback_list %}
+            {% for fb in feedback_list %}
+            <tr>
+              <td class="font-monospace text-secondary small">{{ fb.created_at[:16] }}</td>
+              <td class="font-monospace small text-cyan">{{ fb.username or 'Analyst' }}</td>
+              <td class="text-truncate" style="max-width: 200px;">{{ fb.subject or 'Message #' ~ fb.detection_id }}</td>
+              <td>
+                {% if fb.detected_category == 'Phishing' %}
+                  <span class="badge badge-phish">Phishing</span>
+                {% elif fb.detected_category == 'Spam' %}
+                  <span class="badge badge-spam">Spam</span>
+                {% else %}
+                  <span class="badge badge-safe">Safe</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if fb.feedback_type == 'correct' %}
+                  <span class="badge bg-success-subtle text-success"><i class="fa-solid fa-check me-1"></i> Correct</span>
+                {% elif fb.feedback_type == 'false_positive' %}
+                  <span class="badge bg-warning-subtle text-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i> False Positive</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger"><i class="fa-solid fa-circle-xmark me-1"></i> False Negative</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if fb.user_suggested_category %}
+                  <span class="badge bg-dark border border-secondary text-info">{{ fb.user_suggested_category }}</span>
+                {% else %}
+                  <span class="text-muted small">Agreed</span>
+                {% endif %}
+              </td>
+              <td class="small text-secondary text-truncate" style="max-width: 260px;" title="{{ fb.comments }}">
+                {{ fb.comments or 'None provided' }}
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No feedback reports logged yet. Submit verification from the Detect Message page.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

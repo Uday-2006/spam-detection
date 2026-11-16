@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - PhishShield AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="cyber-card p-4 cyber-card-glow">
+        <div class="text-center mb-4">
+          <div class="brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 24px;">
+            <i class="fa-solid fa-user-plus"></i>
+          </div>
+          <h3 class="fw-bold">Create Account</h3>
+          <p class="text-secondary small">Register to start analyzing messages & URLs</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('register') }}" id="registerForm">
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Username</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-user"></i></span>
+              <input type="text" class="form-control" name="username" placeholder="Choose a username" required minlength="3">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Email Address</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-envelope"></i></span>
+              <input type="email" class="form-control" name="email" placeholder="name@company.com" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-lock"></i></span>
+              <input type="password" class="form-control" name="password" id="regPassword" placeholder="Minimum 6 characters" required minlength="6" oninput="checkStrength(this.value)">
+            </div>
+            <!-- Strength meter -->
+            <div class="progress mt-2" style="height: 4px; background: rgba(255,255,255,0.1);">
+              <div class="progress-bar bg-danger" id="strengthBar" style="width: 0%;"></div>
+            </div>
+            <div class="d-flex justify-content-between small text-muted mt-1" style="font-size: 0.72rem;">
+              <span>Strength</span>
+              <span id="strengthText">Too short</span>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small text-secondary fw-semibold">Confirm Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-shield-check"></i></span>
+              <input type="password" class="form-control" name="confirm_password" placeholder="Re-type password" required minlength="6">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-cyber w-100 py-2 mb-3">
+            <i class="fa-solid fa-arrow-right me-2"></i> Complete Registration
+          </button>
+        </form>
+
+        <div class="text-center small text-secondary">
+          Already registered? <a href="{{ url_for('login') }}" class="fw-semibold">Sign in here</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function checkStrength(val) {
+  const bar = document.getElementById('strengthBar');
+  const text = document.getElementById('strengthText');
+  let score = 0;
+  if (val.length >= 6) score += 25;
+  if (val.length >= 10) score += 25;
+  if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score += 25;
+  if (/[0-9]/.test(val) || /[^A-Za-z0-9]/.test(val)) score += 25;
+
+  bar.style.width = score + '%';
+  if (score <= 25) {
+    bar.className = 'progress-bar bg-danger';
+    text.textContent = 'Weak';
+  } else if (score <= 50) {
+    bar.className = 'progress-bar bg-warning';
+    text.textContent = 'Fair';
+  } else if (score <= 75) {
+    bar.className = 'progress-bar bg-info';
+    text.textContent = 'Good';
+  } else {
+    bar.className = 'progress-bar bg-success';
+    text.textContent = 'Strong';
+  }
+}
+</script>
+{% endblock %}

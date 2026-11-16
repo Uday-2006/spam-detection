@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block title %}Detect Spam & Phishing - PhishShield AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="fa-solid fa-magnifying-glass-chart text-info me-2"></i>Message Detection Center</h2>
+      <p class="text-secondary small mb-0">Deep inspection of text semantics, social engineering tactics, sender reputation, and embedded URLs</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-dark border border-secondary text-info p-2 px-3">
+        <i class="fa-solid fa-brain me-1"></i> Hybrid ML + URL Engine
+      </span>
+    </div>
+  </div>
+
+  <!-- One-Click Preset Samples Strip -->
+  <div class="cyber-card p-3 mb-4">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+      <div class="d-flex align-items-center gap-2 text-secondary small fw-semibold">
+        <i class="fa-solid fa-flask-vial text-info"></i>
+        <span>Quick Test Scenarios:</span>
+      </div>
+      <div class="d-flex flex-wrap gap-2" id="presetPillsContainer">
+        <button type="button" class="sample-pill" onclick="loadSample('phishing_bank')">
+          <i class="fa-solid fa-skull text-danger"></i> Bank Phish
+        </button>
+        <button type="button" class="sample-pill" onclick="loadSample('phishing_brand')">
+          <i class="fa-solid fa-shield-virus text-danger"></i> PayPal Impersonation
+        </button>
+        <button type="button" class="sample-pill" onclick="loadSample('spam_lottery')">
+          <i class="fa-solid fa-gift text-warning"></i> Walmart Spam
+        </button>
+        <button type="button" class="sample-pill" onclick="loadSample('safe_work')">
+          <i class="fa-solid fa-check text-success"></i> Safe Work Notice
+        </button>
+        <button type="button" class="sample-pill" onclick="loadSample('hindi_phishing')">
+          <i class="fa-solid fa-language text-info"></i> Hindi Phish
+        </button>
+        <button type="button" class="sample-pill" onclick="loadSample('spanish_phishing')">
+          <i class="fa-solid fa-language text-info"></i> Spanish Phish
+        </button>
+        <button type="button" class="sample-pill" onclick="loadSample('french_phishing')">
+          <i class="fa-solid fa-language text-info"></i> French Phish
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Input Form -->
+    <div class="col-lg-6">
+      <div class="cyber-card h-100">
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-envelope-open me-2 text-info"></i>Input Message Details</h5>
+
+        <form id="detectForm">
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Sender Email Address (Optional)</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-at"></i></span>
+              <input type="email" class="form-control font-monospace" id="inputSender" placeholder="e.g. security@paypal-verify.xyz">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Subject Line (Optional)</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-heading"></i></span>
+              <input type="text" class="form-control" id="inputSubject" placeholder="e.g. URGENT: Your account has been suspended">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small text-secondary fw-semibold mb-0">Message Content <span class="text-danger">*</span></label>
+              <button type="button" class="btn btn-link btn-sm text-secondary p-0 text-decoration-none" onclick="clearForm()">
+                <i class="fa-solid fa-trash-can me-1"></i> Clear
+              </button>
+            </div>
+            <textarea class="form-control font-monospace" id="inputMessage" rows="9" placeholder="Paste the full email or SMS text here for NLP and URL threat analysis..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-cyber w-100 py-3 fs-6" id="btnAnalyze">
+            <i class="fa-solid fa-shield-virus me-2"></i> Scan & Analyze Message
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Column: Results & Explainability Panel -->
+    <div class="col-lg-6">
+      <!-- Default Placeholder State -->
+      <div class="cyber-card h-100 d-flex flex-column align-items-center justify-content-center text-center p-5" id="resultsPlaceholder">
+        <div class="stat-icon total mb-4" style="width: 80px; height: 80px; font-size: 32px;">
+          <i class="fa-solid fa-radar"></i>
+        </div>
+        <h4 class="fw-bold mb-2">Detection Engine Standing By</h4>
+        <p class="text-secondary small mb-4" style="max-width: 360px;">
+          Paste a message on the left or select any quick test scenario above to execute the real-time AI classification pipeline.
+        </p>
+        <div class="d-flex flex-wrap justify-content-center gap-2">
+          <span class="badge bg-dark border border-secondary text-muted">NLP Preprocessing</span>
+          <span class="badge bg-dark border border-secondary text-muted">Scikit-Learn ML</span>
+          <span class="badge bg-dark border border-secondary text-muted">URL Typosquatting</span>
+          <span class="badge bg-dark border border-secondary text-muted">Language Detection</span>
+        </div>
+      </div>
+
+      <!-- Active Results Container (Initially Hidden) -->
+      <div class="cyber-card h-100 d-none" id="resultsContainer">
+        <!-- Top Prediction Banner -->
+        <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom border-secondary border-opacity-25">
+          <div>
+            <span class="text-secondary small text-uppercase fw-semibold" style="letter-spacing: 0.05em;">AI Verdict:</span>
+            <div id="categoryBadgeWrapper" class="mt-1">
+              <!-- Dynamically populated: Badge Safe, Spam, or Phishing -->
+            </div>
+          </div>
+          <div class="text-end">
+            <span class="text-secondary small">Language Detected</span>
+            <div class="fw-bold text-info" id="detectedLangText">English (en)</div>
+          </div>
+        </div>
+
+        <!-- Risk Score Circular Gauge & Summary -->
+        <div class="row align-items-center mb-4">
+          <div class="col-sm-5 text-center">
+            <div class="risk-meter-container">
+              <div class="risk-circle" id="riskCircleBorder" style="background: conic-gradient(#ff3366 0% 98%, rgba(255,255,255,0.1) 98% 100%);">
+                <div class="risk-circle-inner">
+                  <div class="risk-number" id="riskScoreNumber">98</div>
+                  <div class="risk-max">/ 100</div>
+                  <div class="small fw-bold mt-1" id="riskLevelText">High Risk</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-7">
+            <h6 class="fw-bold mb-2"><i class="fa-solid fa-chart-simple text-info me-2"></i>ML Confidence Split</h6>
+            <div class="d-flex flex-column gap-2 mb-3">
+              <div>
+                <div class="d-flex justify-content-between small mb-1">
+                  <span class="text-danger fw-semibold">Phishing Probability</span>
+                  <span class="font-monospace fw-bold text-danger" id="probPhishing">98.2%</span>
+                </div>
+                <div class="progress" style="height: 6px; background: rgba(255,255,255,0.08);">
+                  <div class="progress-bar bg-danger" id="barPhishing" style="width: 98%;"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="d-flex justify-content-between small mb-1">
+                  <span class="text-warning fw-semibold">Spam Probability</span>
+                  <span class="font-monospace fw-bold text-warning" id="probSpam">1.4%</span>
+                </div>
+                <div class="progress" style="height: 6px; background: rgba(255,255,255,0.08);">
+                  <div class="progress-bar bg-warning" id="barSpam" style="width: 1.4%;"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="d-flex justify-content-between small mb-1">
+                  <span class="text-success fw-semibold">Legitimate / Safe</span>
+                  <span class="font-monospace fw-bold text-success" id="probSafe">0.4%</span>
+                </div>
+                <div class="progress" style="height: 6px; background: rgba(255,255,255,0.08);">
+                  <div class="progress-bar bg-success" id="barSafe" style="width: 0.4%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Explainability Accordion / Tabs -->
+        <ul class="nav nav-pills mb-3 gap-2" id="resultTabs" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link active btn-sm" id="tab-reasons" data-bs-toggle="pill" data-bs-target="#content-reasons" type="button">
+              <i class="fa-solid fa-list-check me-1"></i> Explanations
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link btn-sm" id="tab-nlp" data-bs-toggle="pill" data-bs-target="#content-nlp" type="button">
+              <i class="fa-solid fa-quote-left me-1"></i> NLP Triggers
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link btn-sm" id="tab-urls" data-bs-toggle="pill" data-bs-target="#content-urls" type="button">
+              <i class="fa-solid fa-link me-1"></i> URLs (<span id="urlCountBadge">0</span>)
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content flex-grow-1 mb-4" id="resultTabsContent">
+          <!-- Explanations List -->
+          <div class="tab-pane fade show active p-3 rounded" id="content-reasons" style="background: rgba(0,0,0,0.25);">
+            <div class="small fw-semibold text-secondary mb-2">Detection Rationale & Risk Contributions:</div>
+            <ul class="mb-0 ps-3 small text-light" id="explanationsList">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
+
+          <!-- NLP Triggers List -->
+          <div class="tab-pane fade p-3 rounded" id="content-nlp" style="background: rgba(0,0,0,0.25);">
+            <div class="small fw-semibold text-secondary mb-2">Extracted Semantic Triggers:</div>
+            <div id="nlpTagsContainer" class="d-flex flex-wrap gap-1">
+              <!-- Dynamically populated tags -->
+            </div>
+          </div>
+
+          <!-- URLs List -->
+          <div class="tab-pane fade p-3 rounded" id="content-urls" style="background: rgba(0,0,0,0.25);">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="small fw-semibold text-secondary">Extracted Link Analysis:</span>
+              <span class="badge bg-danger-subtle text-danger" style="font-size: 0.7rem;"><i class="fa-solid fa-shield"></i> Safe Isolation</span>
+            </div>
+            <div id="urlsListContainer" class="d-flex flex-column gap-2 small font-monospace">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Human Feedback Section -->
+        <div class="p-3 rounded border border-secondary border-opacity-25 mt-auto" style="background: rgba(0, 242, 254, 0.04);">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-2">
+            <div>
+              <div class="small fw-bold text-light"><i class="fa-solid fa-user-check text-info me-1"></i> Analyst Verification</div>
+              <div class="text-secondary" style="font-size: 0.75rem;">Is this prediction accurate? Submit feedback to improve model audits.</div>
+            </div>
+            <div class="d-flex gap-2" id="feedbackButtonRow">
+              <button type="button" class="btn btn-sm btn-outline-success" onclick="submitFeedback('correct')">
+                <i class="fa-solid fa-check"></i> Correct
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-warning" onclick="openFeedbackModal('false_positive')">
+                <i class="fa-solid fa-triangle-exclamation"></i> False Positive
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="openFeedbackModal('false_negative')">
+                <i class="fa-solid fa-circle-xmark"></i> False Negative
+              </button>
+            </div>
+          </div>
+          <div id="feedbackStatusMsg" class="small text-info fw-semibold mt-1 d-none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detailed Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content cyber-card p-2">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold" id="feedbackModalTitle">Report Incorrect Prediction</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modalFeedbackType">
+        <div class="mb-3">
+          <label class="form-label small text-secondary fw-semibold">What is the actual, correct category?</label>
+          <select class="form-select" id="modalSuggestedCategory">
+            <option value="Safe">Safe / Legitimate</option>
+            <option value="Spam">Spam</option>
+            <option value="Phishing">Phishing</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-secondary fw-semibold">Reasoning or Analyst Notes (Optional)</label>
+          <textarea class="form-control" id="modalComments" rows="3" placeholder="Explain why the prediction was incorrect..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer border-top border-secondary border-opacity-25">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-sm btn-cyber" onclick="submitModalFeedback()">Submit Audit Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentDetectionId = null;
+
+// Clear input form
+function clearForm() {
+  document.getElementById('inputSender').value = '';
+  document.getElementById('inputSubject').value = '';
+  document.getElementById('inputMessage').value = '';
+  document.getElementById('inputMessage').focus();
+}
+
+// Quick Sample Message Loader
+async function loadSample(sampleKey) {
+  try {
+    const res = await fetch('/api/sample-messages');
+    const samples = await res.json();
+    const item = samples[sampleKey];
+    if (item) {
+      document.getElementById('inputSender').value = item.sender || '';
+      document.getElementById('inputSubject').value = item.subject || '';
+      document.getElementById('inputMessage').value = item.message || '';
+      // Trigger detection
+      document.getElementById('btnAnalyze').click();
+    }
+  } catch (err) {
+    console.error("Error loading sample:", err);
+  }
+}
+
+// Main Detection Submission
+document.getElementById('detectForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const sender = document.getElementById('inputSender').value.trim();
+  const subject = document.getElementById('inputSubject').value.trim();
+  const message = document.getElementById('inputMessage').value.trim();
+  const btn = document.getElementById('btnAnalyze');
+
+  if (!message && !subject) {
+    alert("Please provide message text or a subject line to analyze.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Analyzing Threat Vectors...';
+
+  try {
+    const response = await fetch('/api/detect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sender, subject, message })
+    });
+
+    const data = await response.json();
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-shield-virus me-2"></i> Scan & Analyze Message';
+
+    if (data.status === 'success') {
+      displayResults(data);
+    } else {
+      alert("Analysis error: " + (data.error || "Unknown server response"));
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-shield-virus me-2"></i> Scan & Analyze Message';
+    console.error("Detection error:", err);
+    alert("Network or server error executing detection.");
+  }
+});
+
+// Render Results into UI
+function displayResults(data) {
+  currentDetectionId = data.detection_id;
+
+  // Toggle containers
+  document.getElementById('resultsPlaceholder').classList.add('d-none');
+  const resultsCard = document.getElementById('resultsContainer');
+  resultsCard.classList.remove('d-none');
+
+  // Category Badge
+  const badgeWrapper = document.getElementById('categoryBadgeWrapper');
+  if (data.category === 'Phishing') {
+    badgeWrapper.innerHTML = '<span class="badge badge-phish fs-6 py-2 px-3"><i class="fa-solid fa-skull"></i> Phishing Message</span>';
+  } else if (data.category === 'Spam') {
+    badgeWrapper.innerHTML = '<span class="badge badge-spam fs-6 py-2 px-3"><i class="fa-solid fa-bullhorn"></i> Spam / Unsolicited</span>';
+  } else {
+    badgeWrapper.innerHTML = '<span class="badge badge-safe fs-6 py-2 px-3"><i class="fa-solid fa-shield-check"></i> Legitimate / Safe</span>';
+  }
+
+  // Language
+  document.getElementById('detectedLangText').textContent = data.language.name + (data.language.supported ? '' : ' (Generic Heuristics)');
+
+  // Risk Score Gauge
+  const score = data.risk_score;
+  document.getElementById('riskScoreNumber').textContent = score;
+  document.getElementById('riskScoreNumber').style.color = data.risk_color;
+  document.getElementById('riskLevelText').textContent = data.risk_level;
+  document.getElementById('riskLevelText').style.color = data.risk_color;
+
+  const circleBorder = document.getElementById('riskCircleBorder');
+  circleBorder.style.background = `conic-gradient(${data.risk_color} 0% ${score}%, rgba(255,255,255,0.1) ${score}% 100%)`;
+
+  // Probabilities
+  const probs = data.ml_analysis.probabilities || {};
+  const pPhish = ((probs.Phishing || 0) * 100).toFixed(1);
+  const pSpam = ((probs.Spam || 0) * 100).toFixed(1);
+  const pSafe = ((probs.Safe || 0) * 100).toFixed(1);
+
+  document.getElementById('probPhishing').textContent = pPhish + '%';
+  document.getElementById('barPhishing').style.width = pPhish + '%';
+
+  document.getElementById('probSpam').textContent = pSpam + '%';
+  document.getElementById('barSpam').style.width = pSpam + '%';
+
+  document.getElementById('probSafe').textContent = pSafe + '%';
+  document.getElementById('barSafe').style.width = pSafe + '%';
+
+  // Explanations List
+  const expList = document.getElementById('explanationsList');
+  expList.innerHTML = '';
+  (data.explanations || []).forEach(exp => {
+    const li = document.createElement('li');
+    li.className = 'mb-1';
+    li.textContent = exp;
+    expList.appendChild(li);
+  });
+
+  // NLP Semantic Tags
+  const nlpTags = document.getElementById('nlpTagsContainer');
+  nlpTags.innerHTML = '';
+  const nlp = data.nlp_analysis || {};
+
+  (nlp.urgency_triggers || []).forEach(t => {
+    nlpTags.innerHTML += `<span class="threat-tag"><i class="fa-solid fa-clock"></i> Urgency: ${t}</span>`;
+  });
+  (nlp.threat_triggers || []).forEach(t => {
+    nlpTags.innerHTML += `<span class="threat-tag"><i class="fa-solid fa-handcuffs"></i> Threat: ${t}</span>`;
+  });
+  (nlp.credential_triggers || []).forEach(t => {
+    nlpTags.innerHTML += `<span class="threat-tag"><i class="fa-solid fa-key"></i> Credential: ${t}</span>`;
+  });
+  (nlp.reward_triggers || []).forEach(t => {
+    nlpTags.innerHTML += `<span class="threat-tag" style="color: #ffb703; border-color: rgba(255,183,3,0.3);"><i class="fa-solid fa-gift"></i> Reward: ${t}</span>`;
+  });
+  (nlp.manipulation_flags || []).forEach(f => {
+    nlpTags.innerHTML += `<span class="info-tag"><i class="fa-solid fa-circle-exclamation"></i> ${f}</span>`;
+  });
+
+  if (nlpTags.children.length === 0) {
+    nlpTags.innerHTML = '<span class="text-muted small">No malicious linguistic pressure patterns identified.</span>';
+  }
+
+  // URLs List
+  const urlCount = data.url_analysis ? data.url_analysis.url_count : 0;
+  document.getElementById('urlCountBadge').textContent = urlCount;
+  const urlsContainer = document.getElementById('urlsListContainer');
+  urlsContainer.innerHTML = '';
+
+  if (urlCount > 0 && data.url_analysis.urls) {
+    data.url_analysis.urls.forEach(u => {
+      let flagBadges = '';
+      (u.flags || []).forEach(f => {
+        flagBadges += `<div class="text-danger small"><i class="fa-solid fa-triangle-exclamation me-1"></i>${f}</div>`;
+      });
+      urlsContainer.innerHTML += `
+        <div class="p-2 rounded border border-secondary border-opacity-25" style="background: rgba(0,0,0,0.3);">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="text-break text-cyan fw-bold">${u.url}</span>
+            <span class="badge ${u.risk_score >= 60 ? 'bg-danger' : (u.risk_score >= 30 ? 'bg-warning' : 'bg-success')}">${u.verdict} (${u.risk_score}/100)</span>
+          </div>
+          ${flagBadges}
+        </div>
+      `;
+    });
+  } else {
+    urlsContainer.innerHTML = '<span class="text-muted small">No embedded hyperlinks or URLs detected in message.</span>';
+  }
+
+  // Reset feedback confirmation message
+  document.getElementById('feedbackStatusMsg').classList.add('d-none');
+}
+
+// User Feedback Handlers
+async function submitFeedback(type, suggested = '', comments = '') {
+  if (!currentDetectionId) return;
+
+  try {
+    const res = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        detection_id: currentDetectionId,
+        feedback_type: type,
+        suggested_category: suggested,
+        comments: comments
+      })
+    });
+    const result = await res.json();
+    if (result.status === 'success') {
+      const msg = document.getElementById('feedbackStatusMsg');
+      msg.textContent = 'Feedback registered successfully! Model audit log updated.';
+      msg.classList.remove('d-none');
+    }
+  } catch (err) {
+    console.error("Feedback error:", err);
+  }
+}
+
+function openFeedbackModal(type) {
+  document.getElementById('modalFeedbackType').value = type;
+  document.getElementById('feedbackModalTitle').textContent = 
+    type === 'false_positive' ? 'Report False Positive (Safe marked as Threat)' : 'Report False Negative (Threat marked as Safe)';
+  const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+  modal.show();
+}
+
+function submitModalFeedback() {
+  const type = document.getElementById('modalFeedbackType').value;
+  const suggested = document.getElementById('modalSuggestedCategory').value;
+  const comments = document.getElementById('modalComments').value.trim();
+
+  submitFeedback(type, suggested, comments);
+  const modalEl = document.getElementById('feedbackModal');
+  const modal = bootstrap.Modal.getInstance(modalEl);
+  if (modal) modal.hide();
+}
+</script>
+{% endblock %}

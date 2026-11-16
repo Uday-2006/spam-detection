@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - PhishShield AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+      <div class="cyber-card p-4 cyber-card-glow">
+        <div class="text-center mb-4">
+          <div class="brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 24px;">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <h3 class="fw-bold">Sign In</h3>
+          <p class="text-secondary small">Access the Threat Detection Platform</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}">
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Username</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-user"></i></span>
+              <input type="text" class="form-control" name="username" id="loginUsername" placeholder="e.g. admin or analyst" required autofocus>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small text-secondary fw-semibold">Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-lock"></i></span>
+              <input type="password" class="form-control" name="password" id="loginPassword" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-cyber w-100 py-2 mb-3">
+            <i class="fa-solid fa-right-to-bracket me-2"></i> Authenticate
+          </button>
+        </form>
+
+        <!-- Quick 1-Click Demo Login Chips -->
+        <div class="p-3 rounded mb-3" style="background: rgba(0, 242, 254, 0.05); border: 1px dashed var(--border-color);">
+          <div class="small fw-semibold mb-2" style="color: var(--accent-cyan);">
+            <i class="fa-solid fa-key me-1"></i> Quick Demo Accounts:
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-outline-info flex-grow-1" onclick="fillCredentials('admin', 'admin123')">
+              <strong>Admin:</strong> admin / admin123
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary flex-grow-1" onclick="fillCredentials('analyst', 'analyst123')">
+              <strong>Analyst:</strong> analyst / analyst123
+            </button>
+          </div>
+        </div>
+
+        <div class="text-center small text-secondary">
+          Don't have an account? <a href="{{ url_for('register') }}" class="fw-semibold">Create one</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function fillCredentials(user, pass) {
+  document.getElementById('loginUsername').value = user;
+  document.getElementById('loginPassword').value = pass;
+}
+</script>
+{% endblock %}

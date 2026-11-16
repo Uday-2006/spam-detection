@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "stitch": {
+      "command": "cmd.exe",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@_davideast/stitch-mcp",
+        "proxy"
+      ],
+      "env": {
+        "STITCH_API_KEY": "YOUR_STITCH_API_KEY"
+      }
+    },
+    "phishshield": {
+      "command": "python",
+      "args": [
+        "mcp_server.py"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}

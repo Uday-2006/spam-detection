@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Suspicious URL Threat Scanner - PhishShield AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="fa-solid fa-link text-info me-2"></i>Suspicious URL Threat Scanner</h2>
+      <p class="text-secondary small mb-0">Static structural and heuristic inspection without ever opening or contacting the remote server</p>
+    </div>
+    <span class="badge bg-danger-subtle text-danger p-2 px-3">
+      <i class="fa-solid fa-shield-halved me-1"></i> Zero-Click Safe Isolation
+    </span>
+  </div>
+
+  <!-- Quick Test Preset URLs Strip -->
+  <div class="cyber-card p-3 mb-4">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+      <div class="d-flex align-items-center gap-2 text-secondary small fw-semibold">
+        <i class="fa-solid fa-vial text-info"></i>
+        <span>Try Example URLs:</span>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="sample-pill font-monospace" onclick="setScanUrl('http://paypa1-security-update.com/login')">
+          <i class="fa-solid fa-triangle-exclamation text-danger"></i> paypa1-update.com
+        </button>
+        <button type="button" class="sample-pill font-monospace" onclick="setScanUrl('http://192.168.1.105/chase-cancel-wire')">
+          <i class="fa-solid fa-network-wired text-danger"></i> Raw IP Address
+        </button>
+        <button type="button" class="sample-pill font-monospace" onclick="setScanUrl('http://bit.ly/free-amazon-giftcard')">
+          <i class="fa-solid fa-compress text-warning"></i> bit.ly Shortener
+        </button>
+        <button type="button" class="sample-pill font-monospace" onclick="setScanUrl('http://login.chase.com.verify-session.xyz/account')">
+          <i class="fa-solid fa-layer-group text-danger"></i> Deep Subdomain & .xyz
+        </button>
+        <button type="button" class="sample-pill font-monospace" onclick="setScanUrl('https://github.com/torvalds/linux')">
+          <i class="fa-solid fa-check text-success"></i> Official HTTPS Legit
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Scanner Input Card -->
+    <div class="col-lg-5">
+      <div class="cyber-card">
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-barcode text-info me-2"></i>Target URL Inspection</h5>
+        
+        <form id="urlScanForm">
+          <div class="mb-3">
+            <label class="form-label small text-secondary fw-semibold">Target Web Address / Link</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-globe"></i></span>
+              <input type="text" class="form-control font-monospace" id="targetUrlInput" placeholder="https://example.com/path?query=1" required>
+            </div>
+            <div class="form-text text-muted small mt-2">
+              <i class="fa-solid fa-info-circle text-info me-1"></i> Input either standard URLs or raw domains. Links will be strictly parsed and scored locally.
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-cyber w-100 py-3" id="btnScanUrl">
+            <i class="fa-solid fa-magnifying-glass me-2"></i> Inspect URL Security
+          </button>
+        </form>
+
+        <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+          <h6 class="fw-bold small text-secondary text-uppercase mb-3" style="letter-spacing: 0.05em;">Checked Threat Vectors:</h6>
+          <div class="d-flex flex-column gap-2 small">
+            <div class="d-flex align-items-center gap-2">
+              <i class="fa-solid fa-check text-success"></i>
+              <span>Numeric IPv4 Hostname Detection</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="fa-solid fa-check text-success"></i>
+              <span>Brand Spoofing & Typosquatting (Leetspeak / Hyphenation)</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="fa-solid fa-check text-success"></i>
+              <span>High-Risk / Disposable TLD (.xyz, .top, .buzz, etc.)</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="fa-solid fa-check text-success"></i>
+              <span>URL Shortener Masking (bit.ly, tinyurl, etc.)</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="fa-solid fa-check text-success"></i>
+              <span>Insecure Transport Protocol (HTTP vs HTTPS)</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="fa-solid fa-check text-success"></i>
+              <span>Credential Harvesting Path Keywords</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scanner Results Card -->
+    <div class="col-lg-7">
+      <div class="cyber-card h-100 d-flex flex-column align-items-center justify-content-center text-center p-5" id="urlResultsPlaceholder">
+        <div class="stat-icon total mb-4" style="width: 80px; height: 80px; font-size: 32px;">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h4 class="fw-bold mb-2">No URL Scanned Yet</h4>
+        <p class="text-secondary small" style="max-width: 360px;">
+          Enter any URL on the left or click an example above to run the deep structural vulnerability audit.
+        </p>
+      </div>
+
+      <!-- Active URL Result Card -->
+      <div class="cyber-card h-100 d-none" id="urlActiveResults">
+        <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom border-secondary border-opacity-25">
+          <div>
+            <span class="text-secondary small text-uppercase fw-semibold">Verdict:</span>
+            <div id="urlVerdictBadge" class="mt-1"></div>
+          </div>
+          <div class="text-end">
+            <span class="text-secondary small">Risk Score</span>
+            <div class="fs-4 fw-bold font-monospace" id="urlRiskScoreText">0/100</div>
+          </div>
+        </div>
+
+        <!-- URL Structure Breakdown -->
+        <div class="p-3 rounded mb-4" style="background: rgba(0,0,0,0.3); font-family: var(--font-mono); font-size: 0.88rem;">
+          <div class="text-muted small mb-1">Target Address:</div>
+          <div class="text-cyan fw-bold text-break mb-3" id="displayScannedUrl"></div>
+
+          <div class="row g-2 small text-secondary">
+            <div class="col-6">
+              <span>Domain / Host:</span>
+              <div class="text-light fw-semibold" id="displayDomain"></div>
+            </div>
+            <div class="col-6">
+              <span>Path / Query:</span>
+              <div class="text-light fw-semibold text-truncate" id="displayPath"></div>
+            </div>
+            <div class="col-6">
+              <span>SSL / TLS Encryption:</span>
+              <div id="displayHttpsBadge"></div>
+            </div>
+            <div class="col-6">
+              <span>Shortener Service:</span>
+              <div id="displayShortenerBadge"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detected Flags List -->
+        <h6 class="fw-bold mb-2"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>Identified Security Warnings</h6>
+        <div id="urlFlagsContainer" class="d-flex flex-column gap-2 mb-4">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Safe Handling Notice -->
+        <div class="mt-auto p-3 rounded" style="background: rgba(0, 242, 254, 0.05); border: 1px solid var(--border-color);">
+          <div class="small fw-semibold text-cyan mb-1">
+            <i class="fa-solid fa-shield-virus me-1"></i> Zero-Click Safe Analysis
+          </div>
+          <p class="small text-muted mb-0" style="font-size: 0.78rem;">
+            PhishShield AI analyzes the lexical patterns, entropy, character substitutions, and syntax of the link in memory. The link is never fetched, preventing attacker callbacks or malware payload delivery.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setScanUrl(url) {
+  document.getElementById('targetUrlInput').value = url;
+  document.getElementById('btnScanUrl').click();
+}
+
+document.getElementById('urlScanForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const urlInput = document.getElementById('targetUrlInput').value.trim();
+  const btn = document.getElementById('btnScanUrl');
+
+  if (!urlInput) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Analyzing Link Structure...';
+
+  try {
+    const res = await fetch('/api/scan-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: urlInput })
+    });
+
+    const data = await res.json();
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-magnifying-glass me-2"></i> Inspect URL Security';
+
+    if (data.status === 'success') {
+      displayUrlResult(data.result);
+    } else {
+      alert("Scan error: " + (data.error || "Unable to inspect URL."));
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-magnifying-glass me-2"></i> Inspect URL Security';
+    console.error("URL Scan Error:", err);
+  }
+});
+
+function displayUrlResult(res) {
+  document.getElementById('urlResultsPlaceholder').classList.add('d-none');
+  const activeCard = document.getElementById('urlActiveResults');
+  activeCard.classList.remove('d-none');
+
+  // Verdict Badge
+  const badge = document.getElementById('urlVerdictBadge');
+  if (res.risk_score >= 60) {
+    badge.innerHTML = '<span class="badge badge-phish fs-6 py-2 px-3"><i class="fa-solid fa-skull"></i> High Risk / Malicious URL</span>';
+  } else if (res.risk_score >= 30) {
+    badge.innerHTML = '<span class="badge badge-spam fs-6 py-2 px-3"><i class="fa-solid fa-triangle-exclamation"></i> Suspicious URL</span>';
+  } else {
+    badge.innerHTML = '<span class="badge badge-safe fs-6 py-2 px-3"><i class="fa-solid fa-check"></i> Clean / Low Risk</span>';
+  }
+
+  // Score
+  const scoreText = document.getElementById('urlRiskScoreText');
+  scoreText.textContent = res.risk_score + '/100';
+  scoreText.className = 'fs-4 fw-bold font-monospace ' + (res.risk_score >= 60 ? 'text-danger' : (res.risk_score >= 30 ? 'text-warning' : 'text-success'));
+
+  // Details
+  document.getElementById('displayScannedUrl').textContent = res.url;
+  document.getElementById('displayDomain').textContent = res.domain || 'N/A';
+  document.getElementById('displayPath').textContent = res.path || '/';
+
+  document.getElementById('displayHttpsBadge').innerHTML = res.has_https 
+    ? '<span class="text-success"><i class="fa-solid fa-lock"></i> HTTPS (TLS Encrypted)</span>' 
+    : '<span class="text-danger"><i class="fa-solid fa-lock-open"></i> Insecure HTTP</span>';
+
+  document.getElementById('displayShortenerBadge').innerHTML = res.is_shortener
+    ? '<span class="text-warning"><i class="fa-solid fa-compress"></i> Detected Shortener</span>'
+    : '<span class="text-muted"><i class="fa-solid fa-arrow-right"></i> Direct Destination</span>';
+
+  // Flags
+  const flagsContainer = document.getElementById('urlFlagsContainer');
+  flagsContainer.innerHTML = '';
+
+  if (res.flags && res.flags.length > 0) {
+    res.flags.forEach(f => {
+      flagsContainer.innerHTML += `
+        <div class="p-2 rounded border border-danger border-opacity-25 d-flex align-items-center gap-2 small" style="background: rgba(255, 51, 102, 0.08);">
+          <i class="fa-solid fa-circle-exclamation text-danger"></i>
+          <span class="text-light">${f}</span>
+        </div>
+      `;
+    });
+  } else {
+    flagsContainer.innerHTML = `
+      <div class="p-2 rounded border border-success border-opacity-25 d-flex align-items-center gap-2 small" style="background: rgba(0, 245, 212, 0.08);">
+        <i class="fa-solid fa-check-circle text-success"></i>
+        <span class="text-light">No structural anomalies, lookalikes, or suspicious parameters found.</span>
+      </div>
+    `;
+  }
+}
+</script>
+{% endblock %}
